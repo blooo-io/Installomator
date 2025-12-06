@@ -478,6 +478,7 @@ latexit
 launchbar
 launchcontrol
 lcadvancedvpnclient
+ledgerwallet
 lexarrecoverytool
 lgcalibrationstudio
 libericajdk11ltsfull

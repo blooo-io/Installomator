@@ -347,8 +347,8 @@ if [[ $(/usr/bin/arch) == "arm64" ]]; then
         rosetta2=no
     fi
 fi
-VERSION="10.8beta"
-VERSIONDATE="2025-03-28"
+VERSION="10.8"
+VERSIONDATE="2025-12-06"
 
 # MARK: Functions
 
@@ -5941,6 +5941,19 @@ lcadvancedvpnclient)
     downloadURL=(https://ftp.lancom.de/LANCOM-Releases/LC-VPN-Client/LC-Advanced-VPN-Client-macOS-"${appShortVersion}"-Rel-x86-64.dmg)
     blockingProcesses=( "LANCOM Advanced VPN Client" "ncprwsmac" )
     expectedTeamID="LL3KBL2M3A"
+    ;;
+ledgerwallet)
+    # Ledger Live Desktop application (app bundle is named "Ledger Wallet.app")
+    name="Ledger Wallet"
+    type="dmg"
+    # Get the latest version from GitHub API by filtering for desktop releases
+    # The tag format is "@ledgerhq/live-desktop@X.Y.Z" and we extract the version number
+    appNewVersion=$(curl -fs "https://api.github.com/repos/LedgerHQ/ledger-live/releases" | grep -o '"tag_name": "@ledgerhq/live-desktop@[^"]*"' | head -1 | sed -E 's/.*@([0-9.]+)"/\1/')
+    # Construct download URL using the version number
+    # Format: https://download.live.ledger.com/ledger-live-desktop-VERSION-mac.dmg
+    downloadURL="https://download.live.ledger.com/ledger-live-desktop-${appNewVersion}-mac.dmg"
+    # Team ID verified from code signature: codesign -dv "Ledger Wallet.app"
+    expectedTeamID="X6LFS5BQKN"
     ;;
 lexarrecoverytool)
     name="Lexar Recovery Tool"
