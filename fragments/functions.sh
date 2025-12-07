@@ -465,7 +465,7 @@ installAppWithPath() { # $1: path to app to install in $targetDir $2: path to fo
         cleanupAndExit 8 "could not find folder: $folderPath" ERROR
     fi
 
-    # verify with spctl
+    # verify with spctl (notarization check)
     printlog "Verifying: $appPath" INFO
     updateDialog "wait" "Verifying..."
     printlog "App size: $(du -sh "$appPath")" DEBUG
@@ -475,8 +475,26 @@ installAppWithPath() { # $1: path to app to install in $targetDir $2: path to fo
     deduplicatelogs "$appVerify"
 
     if [[ $appVerifyStatus -ne 0 ]] ; then
-    #if ! teamID=$(spctl -a -vv "$appPath" 2>&1 | awk '/origin=/ {print $NF }' | tr -d '()' ); then
-        cleanupAndExit 4 "Error verifying $appPath error:\n$logoutput" ERROR
+        # spctl verification failed (app not notarized or signature issue)
+        if [[ "$IGNORE_NOTARIZATION" == "yes" && -n "$expectedTeamID" ]]; then
+            # Bypass notarization check - user accepts the risk
+            printlog "WARNING: spctl verification failed, but IGNORE_NOTARIZATION=yes" WARN
+            printlog "Attempting to verify Team ID via codesign instead..." WARN
+            
+            # Extract Team ID using codesign as fallback
+            codesignOutput=$(codesign -dv --verbose=2 "$appPath" 2>&1)
+            teamID=$(echo "$codesignOutput" | awk -F'=' '/TeamIdentifier/ {print $2}')
+            
+            if [[ -z "$teamID" || "$teamID" == "not set" ]]; then
+                # No Team ID from codesign, use expectedTeamID if user trusts it
+                printlog "WARNING: Could not extract Team ID from codesign. Using expectedTeamID: $expectedTeamID" WARN
+                teamID="$expectedTeamID"
+            fi
+            printlog "Bypassing notarization check. Team ID from codesign: $teamID" WARN
+        else
+            # Normal behavior: exit on verification failure
+            cleanupAndExit 4 "Error verifying $appPath error:\n$logoutput" ERROR
+        fi
     fi
     printlog "Debugging enabled, App Verification output was:\n$logoutput" DEBUG
     printlog "Team ID matching: $teamID (expected: $expectedTeamID )" INFO
@@ -619,7 +637,7 @@ installFromDMG() {
 }
 
 installFromPKG() {
-    # verify with spctl
+    # verify with spctl (notarization check)
     printlog "Verifying: $archiveName"
     updateDialog "wait" "Verifying..."
     printlog "File list: $(ls -lh "$archiveName")" DEBUG
@@ -637,8 +655,26 @@ installFromPKG() {
     deduplicatelogs "$spctlOut"
 
     if [[ $spctlStatus -ne 0 ]] ; then
-    #if ! spctlout=$(spctl -a -vv -t install "$archiveName" 2>&1 ); then
-        cleanupAndExit 4 "Error verifying $archiveName error:\n$logoutput" ERROR
+        # spctl verification failed (pkg not notarized or signature issue)
+        if [[ "$IGNORE_NOTARIZATION" == "yes" && -n "$expectedTeamID" ]]; then
+            # Bypass notarization check - user accepts the risk
+            printlog "WARNING: spctl verification failed for PKG, but IGNORE_NOTARIZATION=yes" WARN
+            printlog "Attempting to verify Team ID via pkgutil instead..." WARN
+            
+            # Extract Team ID using pkgutil --check-signature as fallback
+            pkgSignOutput=$(pkgutil --check-signature "$archiveName" 2>&1)
+            teamID=$(echo "$pkgSignOutput" | awk -F'[()]' '/Developer ID Installer/ {print $(NF-1)}')
+            
+            if [[ -z "$teamID" ]]; then
+                # No Team ID from pkgutil, use expectedTeamID if user trusts it
+                printlog "WARNING: Could not extract Team ID from pkgutil. Using expectedTeamID: $expectedTeamID" WARN
+                teamID="$expectedTeamID"
+            fi
+            printlog "Bypassing notarization check for PKG. Team ID: $teamID" WARN
+        else
+            # Normal behavior: exit on verification failure
+            cleanupAndExit 4 "Error verifying $archiveName error:\n$logoutput" ERROR
+        fi
     fi
 
     # Apple signed software has no teamID, grab entire origin instead

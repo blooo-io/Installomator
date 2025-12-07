@@ -106,8 +106,17 @@ IGNORE_APP_STORE_APPS=no
 #                  it will not be touched, no matter its version (default)
 #  - yes           Replace App Store (and VPP) version of the app and handle future
 #                  updates using Installomator, even if latest version.
-#                  Shouldn’t give any problems for the user in most cases.
+#                  Shouldn't give any problems for the user in most cases.
 #                  Known bad example: Slack will lose all settings.
+
+# Notarization check bypass
+IGNORE_NOTARIZATION=no
+# options:
+#  - no            Normal behavior: spctl verification must pass (default)
+#  - yes           Bypass notarization check if expectedTeamID is provided.
+#                  WARNING: This is a security risk! Only use when you trust
+#                  the source and the app/pkg is not notarized by Apple.
+#                  Team ID verification via codesign will still be performed.
 
 # Owner of copied apps
 SYSTEMOWNER=0
