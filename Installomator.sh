@@ -356,7 +356,7 @@ if [[ $(/usr/bin/arch) == "arm64" ]]; then
         rosetta2=no
     fi
 fi
-VERSION="10.8"
+VERSION="blooo-v10.8.6"
 VERSIONDATE="2026-02-10"
 
 # MARK: Functions
