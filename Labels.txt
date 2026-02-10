@@ -980,6 +980,7 @@ weprint
 whatroute
 whatsapp
 whimsical
+windsurf
 wireshark
 wordservice
 workbrew
