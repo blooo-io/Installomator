@@ -480,6 +480,7 @@ launchbar
 launchcontrol
 lcadvancedvpnclient
 ledgerwallet
+lensk8s
 lexarrecoverytool
 lgcalibrationstudio
 libericajdk11ltsfull
